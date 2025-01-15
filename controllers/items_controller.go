@@ -109,11 +109,11 @@ func AddItemHandler(c *fiber.Ctx) error {
 	item := new(models.Item)
 	if err := c.BodyParser(item); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
+			"error": "Invalid request body",
 		})
 	}
 
-	userID := c.Locals("user_id") 
+	userID := c.Locals("user_id")
 	if userID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "UserID is missing in context",
@@ -127,104 +127,122 @@ func AddItemHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	item.UserID = intUserID
+
 	_, err := config.Database.Exec(
 		`INSERT INTO items (user_id, name, description, stock) VALUES ($1, $2, $3, $4)`,
-		intUserID, item.Name, item.Description, item.Stock,
+		item.UserID, item.Name, item.Description, item.Stock,
 	)
 	if err != nil {
 		log.Printf("Error inserting item: %v\n", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to add item",
+			"error": "Failed to add item",
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "item added successfully",
+		"message": "Item added successfully",
 	})
 }
 
 func RestockItemHandler(c *fiber.Ctx) error {
-    userID := c.Locals("user_id")
-    if userID == nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "error": "UserID is missing in context",
-        })
-    }
+	userID := c.Locals("user_id")
+	if userID == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "UserID is missing in context",
+		})
+	}
 
-    intUserID, ok := userID.(int)
-    if !ok {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": "Invalid UserID format",
-        })
-    }
+	intUserID, ok := userID.(int)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid UserID format",
+		})
+	}
 
-    itemID, err := strconv.Atoi(c.Params("id"))
-    if err != nil || itemID <= 0 {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid item ID",
-        })
-    }
+	itemID, err := strconv.Atoi(c.Params("id"))
+	if err != nil || itemID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid item ID",
+		})
+	}
 
-    var body struct {
-        Quantity int `json:"quantity"`
-    }
-    if err := c.BodyParser(&body); err != nil || body.Quantity <= 0 {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid request body or quantity must be greater than zero",
-        })
-    }
+	var ownerID int
+	err = config.Database.QueryRow(`SELECT user_id FROM items WHERE id = $1`, itemID).Scan(&ownerID)
+	if err != nil || ownerID != intUserID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "You do not have permission to modify this item",
+		})
+	}
 
-    if err := module.RestockItem(intUserID, itemID, body.Quantity); err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": err.Error(),
-        })
-    }
+	var body struct {
+		Quantity int `json:"quantity"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.Quantity <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body or quantity must be greater than zero",
+		})
+	}
 
-    return c.JSON(fiber.Map{
-        "message": "Item restocked successfully",
-    })
+	if err := module.RestockItem(intUserID, itemID, body.Quantity); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Item restocked successfully",
+	})
 }
 
 func SellItemHandler(c *fiber.Ctx) error {
-    itemID, err := strconv.Atoi(c.Params("id"))
-    if err != nil || itemID <= 0 {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid item ID",
-        })
-    }
+	itemID, err := strconv.Atoi(c.Params("id"))
+	if err != nil || itemID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid item ID",
+		})
+	}
 
-    var body struct {
-        Quantity int `json:"quantity"`
-    }
-    if err := c.BodyParser(&body); err != nil || body.Quantity <= 0 {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid request body or quantity must be greater than zero",
-        })
-    }
+	var body struct {
+		Quantity int `json:"quantity"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.Quantity <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body or quantity must be greater than zero",
+		})
+	}
 
-    userID := c.Locals("user_id")
-    if userID == nil {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "error": "UserID is missing in context",
-        })
-    }
+	userID := c.Locals("user_id")
+	if userID == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "UserID is missing in context",
+		})
+	}
 
-    intUserID, ok := userID.(int)
-    if !ok {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": "Invalid UserID format",
-        })
-    }
+	intUserID, ok := userID.(int)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid UserID format",
+		})
+	}
 
-    if err := module.SellItem(intUserID, itemID, body.Quantity); err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": err.Error(),
-        })
-    }
+	var ownerID int
+	err = config.Database.QueryRow(`SELECT user_id FROM items WHERE id = $1`, itemID).Scan(&ownerID)
+	if err != nil || ownerID != intUserID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "You do not have permission to modify this item",
+		})
+	}
 
-    return c.JSON(fiber.Map{
-        "message": "Item sold successfully",
-    })
+	if err := module.SellItem(intUserID, itemID, body.Quantity); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Item sold successfully",
+	})
 }
 
 func DeleteItemHandler(c *fiber.Ctx) error {
