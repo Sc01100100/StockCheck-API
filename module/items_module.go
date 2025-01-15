@@ -26,14 +26,20 @@ func RestockItem(userID, itemID, quantity int) error {
     }
 
     stockTransaction := models.StockTransaction{
-        ItemID:   itemID,
-        Quantity: quantity,
-        Type:     "IN",
+        ItemID:    itemID,
+        ItemName:  item.Name, 
+        Quantity:  quantity,
+        Type:      "IN",
         CreatedAt: time.Now(),
-        UserID:   userID, 
+        UserID:    userID,
     }
-    _, err = config.Database.Exec(`INSERT INTO stock_transactions (item_id, quantity, type, created_at, user_id)
-        VALUES ($1, $2, $3, $4, $5)`, stockTransaction.ItemID, stockTransaction.Quantity, stockTransaction.Type, stockTransaction.CreatedAt, stockTransaction.UserID)
+
+    _, err = config.Database.Exec(`
+        INSERT INTO stock_transactions (item_id, item_name, quantity, type, created_at, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        stockTransaction.ItemID, stockTransaction.ItemName, stockTransaction.Quantity,
+        stockTransaction.Type, stockTransaction.CreatedAt, stockTransaction.UserID,
+    )
     if err != nil {
         return fmt.Errorf("failed to record stock transaction: %w", err)
     }
@@ -61,16 +67,22 @@ func SellItem(userID, itemID, quantity int) error {
     if err != nil {
         return fmt.Errorf("failed to update stock: %w", err)
     }
-	
+
     stockTransaction := models.StockTransaction{
-        ItemID:   itemID,
-        Quantity: -quantity,
-        Type:     "OUT",
+        ItemID:    itemID,
+        ItemName:  item.Name, 
+        Quantity:  -quantity,
+        Type:      "OUT",
         CreatedAt: time.Now(),
-        UserID:   userID,
+        UserID:    userID,
     }
-    _, err = config.Database.Exec(`INSERT INTO stock_transactions (item_id, quantity, type, created_at, user_id)
-        VALUES ($1, $2, $3, $4, $5)`, stockTransaction.ItemID, stockTransaction.Quantity, stockTransaction.Type, stockTransaction.CreatedAt, stockTransaction.UserID)
+
+    _, err = config.Database.Exec(`
+        INSERT INTO stock_transactions (item_id, item_name, quantity, type, created_at, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        stockTransaction.ItemID, stockTransaction.ItemName, stockTransaction.Quantity,
+        stockTransaction.Type, stockTransaction.CreatedAt, stockTransaction.UserID,
+    )
     if err != nil {
         return fmt.Errorf("failed to record stock transaction: %w", err)
     }
