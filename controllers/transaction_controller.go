@@ -7,6 +7,7 @@ import (
 
 	"github.com/Sc01100100/SaveCash-API/models"
 	"github.com/Sc01100100/SaveCash-API/module"
+	"github.com/Sc01100100/SaveCash-API/config"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -59,25 +60,6 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":      "success",
 		"transaction": transaction,
-	})
-}
-
-func DeleteTransactionHandler(c *fiber.Ctx) error {
-	transactionID, err := strconv.Atoi(c.Params("transactionID"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid transaction ID",
-		})
-	}
-
-	if err := module.DeleteTransaction(transactionID); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete transaction",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Transaction deleted successfully",
 	})
 }
 
@@ -134,25 +116,6 @@ func CreateIncomeHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status": "success",
 		"income": newIncome,
-	})
-}
-
-func DeleteIncomeHandler(c *fiber.Ctx) error {
-	incomeID, err := strconv.Atoi(c.Params("incomeID"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid income ID",
-		})
-	}
-
-	if err := module.DeleteIncome(incomeID); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete income",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Income deleted successfully",
 	})
 }
 
@@ -216,4 +179,59 @@ func GetIncomesHandler(c *fiber.Ctx) error {
 		"status":  "success",
 		"incomes": incomes,
 	})
+}
+
+func DeleteTransactionHandler(c *fiber.Ctx) error {
+    id, err := strconv.Atoi(c.Params("id"))
+    if err != nil || id <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid transaction ID",
+        })
+    }
+
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    var ownerID int
+    err = config.Database.QueryRow(`SELECT user_id FROM transactions WHERE id = $1`, id).Scan(&ownerID)
+    if err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Transaction not found",
+        })
+    }
+
+    if ownerID != intUserID {
+        return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+            "status":  "error",
+            "message": "You are not authorized to delete this transaction",
+        })
+    }
+
+    err = module.DeleteTransaction(id)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status":  "success",
+        "message": "Transaction deleted successfully",
+    })
 }

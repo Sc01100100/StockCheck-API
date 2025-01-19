@@ -54,15 +54,6 @@ func CreateTransaction(userID int, amount float64, category, description string)
 	return transaction, nil
 }
 
-func DeleteTransaction(transactionID int) error {
-	query := `DELETE FROM transactions WHERE id = $1`
-	_, err := config.Database.Exec(query, transactionID)
-	if err != nil {
-		return fmt.Errorf("failed to delete transaction: %w", err)
-	}
-	return nil
-}
-
 func CreateIncome(userID int, amount float64, source string) (models.Income, error) {
 	var exists bool
 	err := config.Database.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`, userID).Scan(&exists)
@@ -99,27 +90,6 @@ func CreateIncome(userID int, amount float64, source string) (models.Income, err
 	}
 
 	return income, nil
-}
-
-func DeleteIncome(incomeID int) error {
-	var amount float64
-	err := config.Database.QueryRow(`SELECT amount FROM incomes WHERE id = $1`, incomeID).Scan(&amount)
-	if err != nil {
-		return fmt.Errorf("failed to fetch income amount: %w", err)
-	}
-
-	query := `DELETE FROM incomes WHERE id = $1`
-	_, err = config.Database.Exec(query, incomeID)
-	if err != nil {
-		return fmt.Errorf("failed to delete income: %w", err)
-	}
-
-	_, err = config.Database.Exec(`UPDATE users SET balance = balance - $1 WHERE id = (SELECT user_id FROM incomes WHERE id = $2)`, amount, incomeID)
-	if err != nil {
-		return fmt.Errorf("failed to update user balance after deleting income: %w", err)
-	}
-
-	return nil
 }
 
 func GetTransactions(userID int) ([]models.Transaction, error) {
@@ -160,4 +130,12 @@ func GetIncomes(userID int) ([]models.Income, error) {
 	}
 
 	return incomes, nil
+}
+
+func DeleteTransaction(id int) error {
+    _, err := config.Database.Exec(`DELETE FROM transactions WHERE id = $1`, id)
+    if err != nil {
+        return fmt.Errorf("failed to delete transaction: %w", err)
+    }
+    return nil
 }
