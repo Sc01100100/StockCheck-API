@@ -139,3 +139,25 @@ func DeleteTransaction(id int) error {
     }
     return nil
 }
+
+func UpdateTransaction(transactionID int, userID int, amount float64, category string, description string) (*models.Transaction, error) {
+    var existingTransaction models.Transaction
+    err := config.Database.QueryRow(`SELECT id, user_id, amount, category, description FROM transactions WHERE id = $1`, transactionID).Scan(&existingTransaction.ID, &existingTransaction.UserID, &existingTransaction.Amount, &existingTransaction.Category, &existingTransaction.Description)
+    if err != nil {
+        return nil, fmt.Errorf("transaction not found: %w", err)
+    }
+
+    if existingTransaction.UserID != userID {
+        return nil, fmt.Errorf("you are not authorized to update this transaction")
+    }
+
+    _, err = config.Database.Exec(`UPDATE transactions SET amount = $1, category = $2, description = $3 WHERE id = $4`, amount, category, description, transactionID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to update transaction: %w", err)
+    }
+
+    existingTransaction.Amount = amount
+    existingTransaction.Category = category
+    existingTransaction.Description = description
+    return &existingTransaction, nil
+}

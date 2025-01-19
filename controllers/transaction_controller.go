@@ -235,3 +235,54 @@ func DeleteTransactionHandler(c *fiber.Ctx) error {
         "message": "Transaction deleted successfully",
     })
 }
+
+func UpdateTransactionHandler(c *fiber.Ctx) error {
+    transactionID, err := strconv.Atoi(c.Params("id"))
+    if err != nil || transactionID <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid transaction ID",
+        })
+    }
+	
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    var body struct {
+        Amount      float64 `json:"amount"`
+        Category    string  `json:"category"`
+        Description string  `json:"description"`
+    }
+    if err := c.BodyParser(&body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid request body",
+        })
+    }
+
+    updatedTransaction, err := module.UpdateTransaction(transactionID, intUserID, body.Amount, body.Category, body.Description)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status":      "success",
+        "transaction": updatedTransaction,
+    })
+}
