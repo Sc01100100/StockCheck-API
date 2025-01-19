@@ -132,17 +132,29 @@ func GetIncomes(userID int) ([]models.Income, error) {
 	return incomes, nil
 }
 
-func DeleteTransaction(id int) error {
-    _, err := config.Database.Exec(`DELETE FROM transactions WHERE id = $1`, id)
+func DeleteTransaction(transactionID int) error {
+    var transaction models.Transaction
+    err := config.Database.QueryRow(`SELECT user_id, amount FROM transactions WHERE id = $1`, transactionID).Scan(&transaction.UserID, &transaction.Amount)
+    if err != nil {
+        return fmt.Errorf("failed to fetch transaction: %w", err)
+    }
+
+    _, err = config.Database.Exec(`DELETE FROM transactions WHERE id = $1`, transactionID)
     if err != nil {
         return fmt.Errorf("failed to delete transaction: %w", err)
     }
+
+    _, err = config.Database.Exec(`UPDATE users SET balance = balance + $1 WHERE id = $2`, transaction.Amount, transaction.UserID)
+    if err != nil {
+        return fmt.Errorf("failed to update user balance: %w", err)
+    }
+
     return nil
 }
 
 func UpdateTransaction(transactionID int, userID int, amount float64, category string, description string) (*models.Transaction, error) {
     var existingTransaction models.Transaction
-    err := config.Database.QueryRow(`SELECT id, user_id, amount, category, description FROM transactions WHERE id = $1`, transactionID).Scan(&existingTransaction.ID, &existingTransaction.UserID, &existingTransaction.Amount, &existingTransaction.Category, &existingTransaction.Description)
+    err := config.Database.QueryRow(`SELECT id, user_id, amount FROM transactions WHERE id = $1`, transactionID).Scan(&existingTransaction.ID, &existingTransaction.UserID, &existingTransaction.Amount)
     if err != nil {
         return nil, fmt.Errorf("transaction not found: %w", err)
     }
@@ -151,9 +163,29 @@ func UpdateTransaction(transactionID int, userID int, amount float64, category s
         return nil, fmt.Errorf("you are not authorized to update this transaction")
     }
 
+    if amount <= 0 {
+        return nil, fmt.Errorf("amount must be greater than zero")
+    }
+
+    var userBalance float64
+    err = config.Database.QueryRow(`SELECT balance FROM users WHERE id = $1`, userID).Scan(&userBalance)
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch user balance: %w", err)
+    }
+
+    newBalance := userBalance - (amount - existingTransaction.Amount)
+    if newBalance < 0 {
+        return nil, fmt.Errorf("insufficient funds: available %.2f, required %.2f", userBalance, amount)
+    }
+
     _, err = config.Database.Exec(`UPDATE transactions SET amount = $1, category = $2, description = $3 WHERE id = $4`, amount, category, description, transactionID)
     if err != nil {
         return nil, fmt.Errorf("failed to update transaction: %w", err)
+    }
+
+    _, err = config.Database.Exec(`UPDATE users SET balance = $1 WHERE id = $2`, newBalance, userID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to update user balance: %w", err)
     }
 
     existingTransaction.Amount = amount

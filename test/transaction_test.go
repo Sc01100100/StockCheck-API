@@ -14,7 +14,6 @@ func TestMain(m *testing.M) {
 	defer config.Database.Close()
 	os.Exit(code)
 }
-
 func TestCreateIncome(t *testing.T) {
 	userID := 1
 	amount := 1000.0
@@ -41,7 +40,6 @@ func TestCreateIncome(t *testing.T) {
 		}
 	}
 }
-
 func TestCreateTransaction(t *testing.T) {
 	userID := 1
 	amount := 500.0
