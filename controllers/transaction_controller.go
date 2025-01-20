@@ -375,3 +375,81 @@ func UpdateIncomeHandler(c *fiber.Ctx) error {
         "income":  updatedIncome,
     })
 }
+
+func GetIncomeByIDHandler(c *fiber.Ctx) error {
+    incomeID, err := strconv.Atoi(c.Params("id"))
+    if err != nil || incomeID <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid income ID",
+        })
+    }
+
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    income, err := module.GetIncomeByID(incomeID, intUserID) 
+    if err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status": "success",
+        "income": income,
+    })
+}
+
+func GetTransactionByIDHandler(c *fiber.Ctx) error {
+    transactionID, err := strconv.Atoi(c.Params("id"))
+    if err != nil || transactionID <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid transaction ID",
+        })
+    }
+
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    transaction, err := module.GetTransactionByID(transactionID, intUserID)
+    if err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status": "success",
+        "transaction": transaction,
+    })
+}

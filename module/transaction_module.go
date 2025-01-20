@@ -249,3 +249,21 @@ func UpdateIncome(incomeID int, userID int, amount float64, source string) (*mod
     existingIncome.Source = source
     return &existingIncome, nil
 }
+
+func GetIncomeByID(incomeID int, userID int) (*models.Income, error) {
+    var income models.Income
+    err := config.Database.QueryRow(`SELECT id, user_id, amount, source, created_at FROM incomes WHERE id = $1 AND user_id = $2`, incomeID, userID).Scan(&income.ID, &income.UserID, &income.Amount, &income.Source, &income.CreatedAt)
+    if err != nil {
+        return nil, fmt.Errorf("income not found or does not belong to the user: %w", err)
+    }
+    return &income, nil
+}
+
+func GetTransactionByID(transactionID int, userID int) (*models.Transaction, error) {
+    var transaction models.Transaction
+    err := config.Database.QueryRow(`SELECT id, user_id, amount, category, description, created_at FROM transactions WHERE id = $1 AND user_id = $2`, transactionID, userID).Scan(&transaction.ID, &transaction.UserID, &transaction.Amount, &transaction.Category, &transaction.Description, &transaction.CreatedAt)
+    if err != nil {
+        return nil, fmt.Errorf("transaction not found or does not belong to the user: %w", err)
+    }
+    return &transaction, nil
+}
