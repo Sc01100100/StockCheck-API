@@ -22,6 +22,8 @@ func SetupRoutes(app *fiber.App) {
 
 	protected.Post("/incomes", controllers.CreateIncomeHandler)
 	protected.Get("/incomes", controllers.GetIncomesHandler)
+	protected.Put("/incomes/:id", controllers.UpdateIncomeHandler)
+	protected.Delete("/incomes/:id", controllers.DeleteIncomeHandler)
 
 	protected.Post("/items", controllers.AddItemHandler)            
 	protected.Get("/items", controllers.GetItemsHandler)   
