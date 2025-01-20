@@ -17,11 +17,13 @@ func SetupRoutes(app *fiber.App) {
 
 	protected.Post("/transactions", controllers.CreateTransactionHandler)
 	protected.Get("/transactions", controllers.GetTransactionsHandler)
+	protected.Get("/transactions/:id", controllers.GetTransactionByIDHandler)
 	protected.Put("/transactions/:id", controllers.UpdateTransactionHandler) 
 	protected.Delete("/transactions/:id", controllers.DeleteTransactionHandler) 
 
 	protected.Post("/incomes", controllers.CreateIncomeHandler)
 	protected.Get("/incomes", controllers.GetIncomesHandler)
+	protected.Get("/incomes/:id", controllers.GetIncomeByIDHandler)
 	protected.Put("/incomes/:id", controllers.UpdateIncomeHandler)
 	protected.Delete("/incomes/:id", controllers.DeleteIncomeHandler)
 
