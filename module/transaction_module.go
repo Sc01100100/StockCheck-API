@@ -193,3 +193,59 @@ func UpdateTransaction(transactionID int, userID int, amount float64, category s
     existingTransaction.Description = description
     return &existingTransaction, nil
 }
+
+func DeleteIncome(incomeID int, userID int) error {
+    var income models.Income
+    err := config.Database.QueryRow(`SELECT user_id, amount FROM incomes WHERE id = $1`, incomeID).Scan(&income.UserID, &income.Amount)
+    if err != nil {
+        return fmt.Errorf("failed to fetch income: %w", err)
+    }
+
+    if income.UserID != userID {
+        return fmt.Errorf("you are not authorized to delete this income")
+    }
+
+    _, err = config.Database.Exec(`DELETE FROM incomes WHERE id = $1`, incomeID)
+    if err != nil {
+        return fmt.Errorf("failed to delete income: %w", err)
+    }
+
+    _, err = config.Database.Exec(`UPDATE users SET balance = balance - $1 WHERE id = $2`, income.Amount, income.UserID)
+    if err != nil {
+        return fmt.Errorf("failed to update user balance: %w", err)
+    }
+
+    return nil
+}
+
+func UpdateIncome(incomeID int, userID int, amount float64, source string) (*models.Income, error) {
+    var existingIncome models.Income
+    err := config.Database.QueryRow(`SELECT id, user_id, amount, source FROM incomes WHERE id = $1`, incomeID).Scan(&existingIncome.ID, &existingIncome.UserID, &existingIncome.Amount, &existingIncome.Source)
+    if err != nil {
+        return nil, fmt.Errorf("income not found: %w", err)
+    }
+
+    if existingIncome.UserID != userID {
+        return nil, fmt.Errorf("you are not authorized to update this income")
+    }
+
+    if amount <= 0 {
+        return nil, fmt.Errorf("amount must be greater than zero")
+    }
+
+    amountDifference := amount - existingIncome.Amount
+
+    _, err = config.Database.Exec(`UPDATE incomes SET amount = $1, source = $2 WHERE id = $3`, amount, source, incomeID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to update income: %w", err)
+    }
+
+    _, err = config.Database.Exec(`UPDATE users SET balance = balance + $1 WHERE id = $2`, amountDifference, userID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to update user balance: %w", err)
+    }
+
+    existingIncome.Amount = amount
+    existingIncome.Source = source
+    return &existingIncome, nil
+}

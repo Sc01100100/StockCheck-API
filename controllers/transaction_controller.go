@@ -286,3 +286,92 @@ func UpdateTransactionHandler(c *fiber.Ctx) error {
         "transaction": updatedTransaction,
     })
 }
+
+func DeleteIncomeHandler(c *fiber.Ctx) error {
+    incomeID, err := strconv.Atoi(c.Params("id"))
+    if err != nil || incomeID <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid income ID",
+        })
+    }
+
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    err = module.DeleteIncome(incomeID, intUserID) 
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status":  "success",
+        "message": "Income deleted successfully",
+    })
+}
+
+func UpdateIncomeHandler(c *fiber.Ctx) error {
+    incomeID, err := strconv.Atoi(c.Params("id"))
+    if err != nil || incomeID <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid income ID",
+        })
+    }
+
+    userID := c.Locals("user_id")
+    if userID == nil {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "status":  "error",
+            "message": "UserID is missing in context",
+        })
+    }
+
+    intUserID, ok := userID.(int)
+    if !ok {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid UserID format",
+        })
+    }
+
+    var body struct {
+        Amount float64 `json:"amount"`
+        Source string  `json:"source"`
+    }
+    if err := c.BodyParser(&body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Invalid request body",
+        })
+    }
+
+    updatedIncome, err := module.UpdateIncome(incomeID, intUserID, body.Amount, body.Source)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status":  "error",
+            "message": err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "status":  "success",
+        "income":  updatedIncome,
+    })
+}
