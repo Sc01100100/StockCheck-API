@@ -27,6 +27,13 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 		})
 	}
 
+    if body.Amount <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "status":  "error",
+            "message": "Amount must be greater than zero",
+        })
+    }
+
 	userID := c.Locals("user_id")
 	if userID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

@@ -113,6 +113,12 @@ func AddItemHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	if item.Stock <= 0 {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "Stock must be greater than zero",
+        })
+    }
+
 	userID := c.Locals("user_id")
 	if userID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
