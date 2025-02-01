@@ -10,6 +10,17 @@ import (
 	"strconv"
 )
 
+// @Summary Get all items for the authenticated user
+// @Description This endpoint fetches all items associated with the currently authenticated user, including item details like name, description, stock, and created date.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/items [get]
 func GetItemsHandler(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
@@ -57,6 +68,17 @@ func GetItemsHandler(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Get all transactions for items of the authenticated user
+// @Description This endpoint fetches all stock transactions related to items for the currently authenticated user, including details like item name, quantity, type, and created date.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/txitems [get]
 func GetTransactionItemsHandler(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
@@ -105,6 +127,18 @@ func GetTransactionItemsHandler(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Add a new item
+// @Description This endpoint allows a user to add a new item to the inventory. The item requires a name, description, and stock count. The stock must be greater than zero.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param item body models.Item true "Item data"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/items [post]
 func AddItemHandler(c *fiber.Ctx) error {
 	item := new(models.Item)
 	if err := c.BodyParser(item); err != nil {
@@ -151,6 +185,19 @@ func AddItemHandler(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Restock an item for the authenticated user
+// @Description This endpoint allows the authenticated user to restock an item they own. The user must provide the item ID and the quantity to restock. The item must belong to the user making the request.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Item ID"
+// @Param stock body models.StockTransaction true "Stock"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/items/restock/{id} [put]
 func RestockItemHandler(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
@@ -201,6 +248,19 @@ func RestockItemHandler(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Sell an item for the authenticated user
+// @Description This endpoint allows the authenticated user to sell an item they own. The user must provide the item ID and the quantity to sell. The item must belong to the user making the request.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Item ID"
+// @Param stock body models.StockTransaction true "Stock"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/items/sell/{id} [put]
 func SellItemHandler(c *fiber.Ctx) error {
 	itemID, err := strconv.Atoi(c.Params("id"))
 	if err != nil || itemID <= 0 {
@@ -251,6 +311,18 @@ func SellItemHandler(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Delete an item for the authenticated user
+// @Description This endpoint allows the authenticated user to delete an item they own. The user must provide the item ID to be deleted. The item must belong to the user making the request.
+// @Tags Items
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Item ID"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/items/{id} [delete]
 func DeleteItemHandler(c *fiber.Ctx) error {
     userID := c.Locals("user_id")
     if userID == nil {

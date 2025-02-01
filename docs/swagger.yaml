@@ -1,0 +1,335 @@
+basePath: /
+definitions:
+  models.Item:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      stock:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.StockTransaction:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      item_id:
+        type: integer
+      item_name:
+        type: string
+      quantity:
+        type: integer
+      type:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      balance:
+        type: number
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: scsc01100100@gmail.com
+    name: API Support
+    url: github.com/Sc01100100/SaveCash-API
+  description: This is a sample swagger for Fiber
+  title: TEST SWAGGER SC
+  version: "1.0"
+paths:
+  /savecash/items:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint fetches all items associated with the currently authenticated
+        user, including item details like name, description, stock, and created date.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Get all items for the authenticated user
+      tags:
+      - Items
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows a user to add a new item to the inventory.
+        The item requires a name, description, and stock count. The stock must be
+        greater than zero.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item data
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Add a new item
+      tags:
+      - Items
+  /savecash/items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint allows the authenticated user to delete an item they
+        own. The user must provide the item ID to be deleted. The item must belong
+        to the user making the request.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Delete an item for the authenticated user
+      tags:
+      - Items
+  /savecash/items/restock/{id}:
+    put:
+      consumes:
+      - application/json
+      description: This endpoint allows the authenticated user to restock an item
+        they own. The user must provide the item ID and the quantity to restock. The
+        item must belong to the user making the request.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stock
+        in: body
+        name: stock
+        required: true
+        schema:
+          $ref: '#/definitions/models.StockTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Restock an item for the authenticated user
+      tags:
+      - Items
+  /savecash/items/sell/{id}:
+    put:
+      consumes:
+      - application/json
+      description: This endpoint allows the authenticated user to sell an item they
+        own. The user must provide the item ID and the quantity to sell. The item
+        must belong to the user making the request.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stock
+        in: body
+        name: stock
+        required: true
+        schema:
+          $ref: '#/definitions/models.StockTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Sell an item for the authenticated user
+      tags:
+      - Items
+  /savecash/login:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows a user to log in by providing an email and
+        password. A JWT token will be generated upon successful login.
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: User login
+      tags:
+      - User
+  /savecash/logout:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows a user to log out by invalidating their JWT
+        token. The token is added to a blacklist to prevent further use.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: User logout
+      tags:
+      - User
+  /savecash/register:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows you to register a new user by providing name,
+        email, password, and role.
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Insert a new user
+      tags:
+      - User
+  /savecash/txitems:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint fetches all stock transactions related to items for
+        the currently authenticated user, including details like item name, quantity,
+        type, and created date.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Get all transactions for items of the authenticated user
+      tags:
+      - Items
+schemes:
+- http
+swagger: "2.0"

@@ -10,6 +10,19 @@ import (
 
 func AuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		openPaths := []string{
+			"/savecash/register",
+			"/savecash/login",
+			"/savecash/logout",
+			"/savecash/docs",
+		}
+
+		for _, path := range openPaths {
+			if strings.HasPrefix(c.Path(), path) {
+				return c.Next()
+			}
+		}
+
 		token := c.Get("Authorization")
 		if token == "" {
 			log.Println("Authorization token is missing")

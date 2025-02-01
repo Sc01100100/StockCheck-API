@@ -60,6 +60,17 @@ func isValidPassword(password string) bool {
 	return hasUpper && hasNumber && hasSpecial
 }
 
+// @Summary Insert a new user
+// @Description This endpoint allows you to register a new user by providing name, email, password, and role.
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User data"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/register [post]
 func InsertUser(c *fiber.Ctx) error {
 	type RequestBody struct {
 		Name     string `json:"name"`
@@ -122,6 +133,17 @@ func InsertUser(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary User login
+// @Description This endpoint allows a user to log in by providing an email and password. A JWT token will be generated upon successful login.
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User data"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/login [post]
 func LoginUser(c *fiber.Ctx) error {
 	type RequestBody struct {
 		Email    string `json:"email"`
@@ -171,6 +193,17 @@ func LoginUser(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary User logout
+// @Description This endpoint allows a user to log out by invalidating their JWT token. The token is added to a blacklist to prevent further use.
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Success 200
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /savecash/logout [post]
 func LogoutUser(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
 	if token == "" {

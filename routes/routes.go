@@ -4,11 +4,13 @@ import (
 	"github.com/Sc01100100/SaveCash-API/controllers"
 	"github.com/Sc01100100/SaveCash-API/middlewares"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 )
 
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/savecash")
 
+	api.Get("/docs/*", swagger.HandlerDefault)
 	api.Post("/register", controllers.InsertUser)
 	api.Post("/login", controllers.LoginUser)
 	api.Post("/logout", controllers.LogoutUser)
